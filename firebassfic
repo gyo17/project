@@ -1,0 +1,21 @@
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAFQXrt5xKez07FW9rbR8xiQ6uDPaN3oqA",
+  authDomain: "game-37920.firebaseapp.com",
+  databaseURL: "https://game-37920-default-rtdb.firebaseio.com/",
+  projectId: "game-37920",
+  storageBucket: "game-37920.firebasestorage.app",
+  messagingSenderId: "409608078389",
+  appId: "1:409608078389:web:4e3e7777dd6857d45e1d7c",
+  measurementId: "G-SKEZJ2XS7R"
+};
+
+// เริ่ม Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// เชื่อม Realtime Database
+const DB = firebase.database();
+
+console.log("🔥 Firebase Connected!");
