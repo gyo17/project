@@ -14,11 +14,8 @@ const WALK_STEP_MS      = 260;
 const BURST_MS          = 1000;
 const PRC_SHOW_MS       = 1600;
 const NEXT_ROUND_MS     = 300;
-/* ลาวาผูกกับ "จำนวนรอบ" ไม่ใช่นาฬิกาจริง — ลาวาขยับเฉพาะตอนจบรอบเท่านั้น
-   ค่านี้คือ "กี่รอบลาวาถึงจะขยับ 1 ช่อง" ยิ่งมาก = ลาวายิ่งช้า
-   ตอบถูก 1 ข้อ = เดิน 1 ช่อง ดังนั้นค่า > 1 คือมีช่องว่างให้ตอบผิดได้บ้าง */
-const ROUNDS_PER_LAVA_RISE = { easy:3.2, medium:2.3, hard:1.6 };
-const LAVA_GRACE_ROUNDS    = 2; // จำนวนรอบแรกที่ลาวาจะยังไม่ขยับเลย
+const LAVA_INTERVAL_MS  = 12000;        // หลังพ้นช่วงพัก ลาวาไหลทุก 12 วิ
+const LAVA_GRACE_MS     = 30*60*1000;   // 30 นาทีแรก ลาวายังไม่ไหลเลย
 
 const BOT_THINK = {
   easy:   { minFrac:.55, maxFrac:.95, correctChance:.65 },
@@ -47,7 +44,7 @@ let mathAnswer=null, mathChoices=[], humanAnswered=false;
 let botTimeouts=[], mathTimerInterval=null, pendingBots=[];
 let PUZZLE_CELLS=[];
 let lavaLevel=0;
-let lavaAccum=0;
+let lavaInterval=null, lavaCountdownInterval=null, lavaStartAt=0;
 
 /* ── Audio (Web Audio API) ───────────────────────── */
 let audioCtx=null;
@@ -88,6 +85,8 @@ const scoreboardEl  = $("scoreboard");
 const roundLabel    = $("round-label");
 const diffLabel     = $("difficulty-label");
 const puzzleCount   = $("puzzle-cell-count");
+const lavaCountdownBadge = $("lava-countdown-badge");
+const lavaCountdownText  = $("lava-countdown-text");
 
 const drawer         = $("question-drawer");
 const qpNormal        = $("qpanel-normal");
@@ -153,7 +152,7 @@ $("btn-home-from-win")?.addEventListener("click",()=>{ location.href="index.html
 
 function stopAll(){
   gameActive=false; currentRoundId++;
-  clearInterval(mathTimerInterval);
+  clearInterval(mathTimerInterval); clearInterval(lavaInterval); clearInterval(lavaCountdownInterval);
   botTimeouts.forEach(t=>clearTimeout(t)); botTimeouts=[];
   closeDrawer();
   successBurst.classList.remove("show");
@@ -304,13 +303,31 @@ function openDrawer(gold=false){
 }
 function closeDrawer(){ drawer.classList.remove("open"); }
 
-/* ── Lava system (round-based, not wall-clock) ───── */
-function tickLava(){
+/* ── Lava system (real-time: หยุดนิ่ง 30 นาทีแรก แล้วไหลทุก 12 วิ) ── */
+function beginLavaCountdown(){
+  lavaStartAt = Date.now() + LAVA_GRACE_MS;
+  updateLavaCountdown();
+  lavaCountdownInterval = setInterval(updateLavaCountdown, 500);
+}
+function updateLavaCountdown(){
   if(!gameActive) return;
-  if(roundNumber<=LAVA_GRACE_ROUNDS) return; // ช่วงพักช่วงต้นเกม ลาวายังไม่ขยับ
-  lavaAccum += 1/(ROUNDS_PER_LAVA_RISE[difficulty]||2.3);
-  while(lavaAccum>=1 && lavaLevel<BOARD_SIZE){
-    lavaAccum-=1;
+  const remain = lavaStartAt - Date.now();
+  if(remain<=0){
+    clearInterval(lavaCountdownInterval); lavaCountdownInterval=null;
+    if(lavaCountdownBadge) lavaCountdownBadge.classList.add("lava-active");
+    if(lavaCountdownText) lavaCountdownText.textContent="ไหลแล้ว! 🌋";
+    startLavaFlow();
+    return;
+  }
+  const totalSec=Math.ceil(remain/1000);
+  const mm=String(Math.floor(totalSec/60)).padStart(2,"0");
+  const ss=String(totalSec%60).padStart(2,"0");
+  if(lavaCountdownText) lavaCountdownText.textContent=`${mm}:${ss}`;
+  if(lavaCountdownBadge) lavaCountdownBadge.classList.toggle("lava-warn", totalSec<=60);
+}
+function startLavaFlow(){
+  lavaInterval=setInterval(()=>{
+    if(!gameActive) return;
     lavaLevel=Math.min(BOARD_SIZE, lavaLevel+1);
     consumeCell(lavaLevel);
     playLavaRise();
@@ -318,8 +335,8 @@ function tickLava(){
     players.forEach(p=>{
       if(!p.eliminated && !p.finished && p.pos>0 && p.pos<=lavaLevel) eliminatePlayer(p);
     });
-  }
-  if(lavaLevel>=BOARD_SIZE){ stopAll(); showWinScreen(null); }
+    if(lavaLevel>=BOARD_SIZE){ stopAll(); showWinScreen(null); }
+  }, LAVA_INTERVAL_MS);
 }
 function consumeCell(val){
   const el=document.querySelector(`.cell[data-cell="${val}"]`);
@@ -342,7 +359,7 @@ function eliminatePlayer(p){
 /* ── GAME INIT ───────────────────────────────────── */
 function initGame(){
   players=rawPlayers.map(p=>({...p, pos:0, finished:false, eliminated:false, finishRank:null}));
-  roundNumber=0; gameActive=true; currentRoundId=0; lavaLevel=0; lavaAccum=0;
+  roundNumber=0; gameActive=true; currentRoundId=0; lavaLevel=0;
 
   const diffNames={easy:"🌿 ง่าย",medium:"🔥 ปานกลาง",hard:"💀 ยาก"};
   diffLabel.textContent=diffNames[difficulty]||"🔥 ปานกลาง";
@@ -356,6 +373,7 @@ function initGame(){
   buildBoard();
   renderTokens();
   renderScoreboard();
+  beginLavaCountdown();
   setTimeout(startRound, 700);
 }
 
@@ -369,9 +387,6 @@ function startRound(){
   roundNumber++;
   currentRoundId++;
   const myRoundId=currentRoundId;
-
-  tickLava();
-  if(!gameActive) return; // เผื่อกรณีลาวาทำให้เกมจบไปแล้วในติ๊กนี้
 
   roundLabel.textContent=`รอบที่ ${roundNumber}`;
   const me=players[0];
