@@ -14,7 +14,8 @@ const WALK_STEP_MS      = 260;
 const BURST_MS          = 1000;
 const PRC_SHOW_MS       = 1600;
 const NEXT_ROUND_MS     = 300;
-const LAVA_INTERVAL_MS  = 10000;
+const LAVA_INTERVAL_MS  = 12000;
+const LAVA_START_DELAY  = { easy:18000, medium:23000, hard:28000 };
 
 const BOT_THINK = {
   easy:   { minFrac:.55, maxFrac:.95, correctChance:.65 },
@@ -40,7 +41,7 @@ const rawPlayers = JSON.parse(sessionStorage.getItem("game_players") || "null")
 /* ── State ───────────────────────────────────────── */
 let players=[], roundNumber=0, gameActive=false, currentRoundId=0;
 let mathAnswer=null, mathChoices=[], humanAnswered=false;
-let botTimeouts=[], mathTimerInterval=null;
+let botTimeouts=[], mathTimerInterval=null, pendingBots=[];
 let PUZZLE_CELLS=[];
 let lavaLevel=0;
 let lavaInterval=null;
@@ -349,13 +350,14 @@ function initGame(){
   buildBoard();
   renderTokens();
   renderScoreboard();
-  startLava();
+  setTimeout(startLava, LAVA_START_DELAY[difficulty] || 20000);
   setTimeout(startRound, 700);
 }
 
 /* ── ROUND ───────────────────────────────────────── */
 function startRound(){
   if(!gameActive) return;
+  flushPendingBots();
   const activePlayers=players.filter(p=>!p.finished&&!p.eliminated);
   if(activePlayers.length===0){ stopAll(); showWinScreen(null); return; }
 
@@ -459,19 +461,32 @@ function scheduleBotsOnly(myRoundId){
 }
 
 function runBots(myRoundId,timeLimit,onGold){
+  flushPendingBots(); // resolve any bots left over from the previous round before wiping them
   botTimeouts.forEach(t=>clearTimeout(t)); botTimeouts=[];
+  pendingBots=[];
   const cfg=BOT_THINK[difficulty];
   for(let i=1;i<players.length;i++){
     if(players[i].finished||players[i].eliminated) continue;
     const think=Math.round(timeLimit*(cfg.minFrac+Math.random()*(cfg.maxFrac-cfg.minFrac)));
     const correct=Math.random()<cfg.correctChance;
+    const pb={i,correct,onGold,resolved:false};
+    pendingBots.push(pb);
     const t=setTimeout(()=>{
       if(!gameActive||currentRoundId!==myRoundId) return;
-      if(correct){ const d=onGold?randInt(1,3):1; applyMove(i,d); }
-      updateRaceRow(onGold?goldRaceList:mathRaceList,i,correct);
+      resolveBot(pb);
     },think);
     botTimeouts.push(t);
   }
+}
+
+function resolveBot(pb){
+  if(!pb||pb.resolved) return;
+  pb.resolved=true;
+  if(pb.correct){ const d=pb.onGold?randInt(1,3):1; applyMove(pb.i,d); }
+  updateRaceRow(pb.onGold?goldRaceList:mathRaceList,pb.i,pb.correct);
+}
+function flushPendingBots(){
+  pendingBots.forEach(resolveBot);
 }
 
 function scheduleNextRound(){ if(gameActive) setTimeout(startRound,NEXT_ROUND_MS); }
