@@ -15,7 +15,7 @@ const BURST_MS          = 1000;
 const PRC_SHOW_MS       = 1600;
 const NEXT_ROUND_MS     = 300;
 const LAVA_INTERVAL_MS  = 12000;        // หลังพ้นช่วงพัก ลาวาไหลทุก 12 วิ
-const LAVA_GRACE_MS     = 30*60*1000;   // 30 นาทีแรก ลาวายังไม่ไหลเลย
+const LAVA_GRACE_MS     = 30*1000;      // 30 วินาทีแรก ลาวายังไม่ไหลเลย
 
 const BOT_THINK = {
   easy:   { minFrac:.55, maxFrac:.95, correctChance:.65 },
