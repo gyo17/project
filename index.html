@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จะบรรลุหรือจะบรรลัย | หน้าหลัก</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="home-body">
+
+<!-- Cave atmosphere layers -->
+<div class="cave-bg">
+  <div class="cave-stalactites" id="stalactites"></div>
+  <div class="lava-river"></div>
+  <div class="embers" id="embers"></div>
+</div>
+
+<section class="home-wrap">
+  <div class="home-inner">
+
+    <!-- HERO -->
+    <div class="hero-section">
+      <div class="gem-icon">💎</div>
+      <div class="hero-badge">🔥 เกมผจญภัย</div>
+      <h1 class="title">
+        จะ<span class="title-accent">บรรลุ</span><br>
+        หรือจะ<span class="title-danger">บรรลัย</span>
+      </h1>
+      <p class="subtitle">ขโมยเพชรจากถ้ำแล้วรีบวิ่งหนี<br>ลาวาคืบคลานตามมาแล้ว — ใครออกก่อนรอด!</p>
+    </div>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector">
+      <button class="mode-tab active" data-mode="local" id="tab-local">🤖 เล่นกับบอท</button>
+      <button class="mode-tab" data-mode="online" id="tab-online">🌐 เล่นออนไลน์</button>
+    </div>
+
+    <!-- LOCAL MODE -->
+    <div class="mode-panel active" id="panel-local">
+      <div class="rules-card">
+        <h2>📜 กติกา</h2>
+        <ul>
+          <li><span class="rule-num">1</span>นักผจญภัย 5 คน เริ่มที่ปากถ้ำ (ช่อง 0)</li>
+          <li><span class="rule-num">2</span>ตอบโจทย์ถูก = ได้เดินทันที ไม่ต้องรอคนอื่น</li>
+          <li><span class="rule-num">3</span>ตอบผิด = หยุดรอบนั้น ตอบซ้ำไม่ได้</li>
+          <li><span class="rule-num">4</span>ทุก 2 นาที มีปริศนาถ้ำ — ตอบถูกรอด ตอบผิดลาวาไล่ทัน!</li>
+        </ul>
+      </div>
+
+      <div class="difficulty-select-wrap">
+        <h2>⚔️ ระดับความยาก</h2>
+        <div class="difficulty-choices">
+          <label class="diff-option"><input type="radio" name="difficulty" value="easy">
+            <div class="diff-card"><span class="diff-icon">🌿</span><strong>ง่าย</strong><small>บวกลบ ≤20<br>บอทตอบช้ามาก</small></div>
+          </label>
+          <label class="diff-option"><input type="radio" name="difficulty" value="medium" checked>
+            <div class="diff-card"><span class="diff-icon">🔥</span><strong>ปานกลาง</strong><small>คูณหารรวมกัน<br>บอทพอสู้ได้</small></div>
+          </label>
+          <label class="diff-option"><input type="radio" name="difficulty" value="hard">
+            <div class="diff-card"><span class="diff-icon">💀</span><strong>ยาก</strong><small>หลายขั้นตอน<br>บอทตอบเร็วโหด</small></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="players-setup">
+        <h2>🧑‍🤝‍🧑 ชื่อนักผจญภัย (คนที่ 1 = คุณ)</h2>
+        <div class="player-inputs" id="player-inputs"></div>
+      </div>
+
+      <button id="btn-start-local" class="btn-primary btn-big">🏃 เริ่มหนีลาวา!</button>
+    </div>
+
+    <!-- ONLINE MODE -->
+    <div class="mode-panel" id="panel-online">
+      <div class="online-hero">
+        <p class="online-desc">เล่นแบบเรียลไทม์กับเพื่อน 5 คน คนละอุปกรณ์ ผ่านอินเทอร์เน็ต</p>
+        <div class="online-note">
+          <span class="note-icon">⚙️</span>
+          <span>ต้องการ Firebase config — ดูวิธีตั้งค่าด้านล่าง</span>
+        </div>
+      </div>
+
+      <div class="online-actions">
+        <div class="online-card" id="card-create">
+          <div class="online-card-icon">🏠</div>
+          <h3>สร้างห้อง</h3>
+          <p>สร้างห้องใหม่ รับรหัส 4 หลัก แล้วแชร์ให้เพื่อน</p>
+
+          <div class="difficulty-select-wrap" style="margin:14px 0 0">
+            <div class="difficulty-choices" style="gap:8px">
+              <label class="diff-option"><input type="radio" name="online-difficulty" value="easy">
+                <div class="diff-card" style="padding:10px 6px"><span class="diff-icon" style="font-size:1.2rem">🌿</span><strong style="font-size:.82rem">ง่าย</strong></div>
+              </label>
+              <label class="diff-option"><input type="radio" name="online-difficulty" value="medium" checked>
+                <div class="diff-card" style="padding:10px 6px"><span class="diff-icon" style="font-size:1.2rem">🔥</span><strong style="font-size:.82rem">ปานกลาง</strong></div>
+              </label>
+              <label class="diff-option"><input type="radio" name="online-difficulty" value="hard">
+                <div class="diff-card" style="padding:10px 6px"><span class="diff-icon" style="font-size:1.2rem">💀</span><strong style="font-size:.82rem">ยาก</strong></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="online-name-row">
+            <input type="text" id="online-name-create" class="online-input" placeholder="ชื่อของคุณ" maxlength="14">
+          </div>
+          <button id="btn-create-room" class="btn-primary" style="width:100%;margin-top:12px">🏠 สร้างห้อง</button>
+        </div>
+
+        <div class="online-divider">หรือ</div>
+
+        <div class="online-card" id="card-join">
+          <div class="online-card-icon">🚪</div>
+          <h3>จอยห้อง</h3>
+          <p>ใส่รหัสห้อง 4 หลักที่เพื่อนแชร์มา</p>
+          <div class="room-code-input">
+            <input type="text" id="room-code-input" class="code-input" placeholder="0000" maxlength="4" inputmode="numeric">
+          </div>
+          <div class="online-name-row">
+            <input type="text" id="online-name-join" class="online-input" placeholder="ชื่อของคุณ" maxlength="14">
+          </div>
+          <button id="btn-join-room" class="btn-primary" style="width:100%;margin-top:12px">🚪 จอยห้อง</button>
+        </div>
+      </div>
+
+      <!-- Firebase setup guide -->
+      <details class="firebase-guide">
+        <summary>⚙️ วิธีตั้งค่า Firebase (คลิกเพื่อดู)</summary>
+        <div class="guide-body">
+          <ol>
+            <li>เข้า <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → สร้างโปรเจกต์ใหม่</li>
+            <li>ไปที่ <strong>Build → Realtime Database</strong> → สร้าง database (เลือก test mode)</li>
+            <li>ไปที่ <strong>Project Settings ⚙️ → Your apps</strong> → เพิ่ม Web app</li>
+            <li>Copy <code>firebaseConfig</code> object ที่ได้</li>
+            <li>เปิดไฟล์ <code>firebase-config.js</code> แล้วแทนที่ค่าตามที่ได้มา</li>
+          </ol>
+          <div class="config-preview">
+<pre>// firebase-config.js
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-app.firebaseapp.com",
+  databaseURL: "https://your-app-default-rtdb.firebaseio.com",
+  projectId: "your-app",
+  storageBucket: "your-app.appspot.com",
+  messagingSenderId: "000000000",
+  appId: "1:000:web:000"
+};</pre>
+          </div>
+        </div>
+      </details>
+
+      <div id="online-status" class="online-status"></div>
+    </div>
+
+  </div>
+</section>
+
+<script src="home.js"></script>
+</body>
+</html>
